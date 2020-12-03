@@ -1,10 +1,10 @@
 octomap_to_gridmap_demo:
   octomap_service_topic: "/rtabmap/octomap_full"
-  min_z: -10.0
-  max_z: 10.0
+  min_z: -20.0
+  max_z: 20.0
 
 grid_map_visualization:
-  grid_map_topic: /octo2grid_node/grid_map
+  grid_map_topic: /global_elevation/grid_map_filter_demo/filtered_map
   grid_map_visualizations:
     - name: elevation_points
       type: point_cloud
@@ -19,5 +19,11 @@ grid_map_visualization:
     - name: map_region
       type: map_region
       params:
-       color: 3289650
-       line_width: 0.1
+        color: 3289650
+        line_width: 0.1
+    - name: slope_grid
+      type: occupancy_grid
+      params:
+        layer: slope
+        data_min: -0.15
+        data_max: 0.15

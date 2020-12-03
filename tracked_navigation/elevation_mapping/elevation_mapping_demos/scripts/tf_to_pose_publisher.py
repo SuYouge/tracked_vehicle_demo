@@ -51,7 +51,8 @@ def main_program():
     # Read frame id's for tf listener
     from_frame = rospy.get_param("~from_frame")
     to_frame = rospy.get_param("~to_frame")
-    pose_name = str(to_frame) + "_pose"
+    ns = rospy.get_namespace()
+    pose_name = ns + str(to_frame) + "_pose"
 
     tf_listener = tf.TransformListener()
     publisher = rospy.Publisher(

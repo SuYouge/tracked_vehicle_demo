@@ -2,7 +2,7 @@
     <arg name="mapping_only" default="false"/>
     <arg name="cost_map" default="false"/>
     <arg name="local_elevation" default="true"/>
-    <arg name="global_elevation" default="false"/>
+    <arg name="global_elevation" default="true"/>
 
     <!-- Choose visualization -->
     <arg name="rviz" default="true" />
@@ -79,7 +79,7 @@
     </group>
 
     <!-- Visualisation RVIZ -->
-    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find tracked_description)/rviz/stereo_outdoor.rviz"/>
+    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find tracked_mapping)/rviz/stereo_outdoor.rviz"/>
     <node name="gt_publiser" pkg="tracked_description" type="gt_publisher_node" args="world ground_truth ground_truth/state ground_truth/trajectory"/>
     <node pkg="tf" type="static_transform_publisher" name="world_to_map" args="0.0 0.0 0.0 0.0 0.0 0.0 /world /map 100" />
 
@@ -91,42 +91,51 @@
             <!-- <remap from="map" to="/world"/> -->
             <!-- <remap from="move_base_simple/goal" to="/planner_goal"/> -->
             <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-                <rosparam file="$(find tracked_description)/config/navi_config/costmap_common_params.yaml" command="load" ns="global_costmap" />
-                <rosparam file="$(find tracked_description)/config/navi_config/global_costmap_params.yaml" command="load" />
-                <rosparam file="$(find tracked_description)/config/navi_config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-                <rosparam file="$(find tracked_description)/config/navi_config/local_costmap_params.yaml" command="load" />
-                <rosparam file="$(find tracked_description)/config/navi_config/base_local_planner_params.yaml" command="load" />
+                <rosparam file="$(find tracked_mapping)/config/navi_config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+                <rosparam file="$(find tracked_mapping)/config/navi_config/global_costmap_params.yaml" command="load" />
+                <rosparam file="$(find tracked_mapping)/config/navi_config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+                <rosparam file="$(find tracked_mapping)/config/navi_config/local_costmap_params.yaml" command="load" />
+                <rosparam file="$(find tracked_mapping)/config/navi_config/base_local_planner_params.yaml" command="load" />
             </node>
         </group>
-        <group if="$(arg local_elevation)">
-            <!-- elevation map 将tf转换为带有方差的pose消息-->
+        <!-- use "local_elevation" for namespace of local elevation map and slope -->
+        <group if="$(arg local_elevation)" ns="local_elevation">
+            <!-- transfer tf to pose with covariance publish to /namespace/odom_pose -->
             <node pkg="elevation_mapping_demos" type="tf_to_pose_publisher.py" name="tf_to_pose" output="screen">
                 <param name="from_frame" type="string" value="/map"/>
                 <param name="to_frame" type="string" value="/odom"/>
             </node>
-            <!-- 接收上一个节点发出的to_frame_pose并进行heightmap建图 消息发布为/local_elevation_mapping/elevation_map-->
+            <!-- receive to_frame_pose and publish heightmap to /namespace/node_name/elevation_map 
+             "/local_elevation/local_elevation_mapping/elevation_map" here-->
             <node pkg="elevation_mapping" type="elevation_mapping" name="local_elevation_mapping" output="screen">
-                <remap from="/local_elevation_mapping/odom_pose" to="/odom_pose"/>
-                <rosparam command="load" file="$(find tracked_description)/config/heightmap_config/robot.yaml" />
-                <rosparam command="load" file="$(find tracked_description)/config/heightmap_config/perfect.yaml" />
-                <rosparam command="load" file="$(find tracked_description)/config/heightmap_config/postprocessor_pipeline.yaml" />
+                <remap from="local_elevation_mapping/odom_pose" to="odom_pose"/>
+                <rosparam command="load" file="$(find tracked_mapping)/config/heightmap_config/robot.yaml" />
+                <rosparam command="load" file="$(find tracked_mapping)/config/heightmap_config/perfect.yaml" />
+                <rosparam command="load" file="$(find tracked_mapping)/config/heightmap_config/postprocessor_pipeline.yaml" />
             </node>
-            <!-- Launch the grid map filters demo node. 对地图进行滤波-->
+            <!-- Launch the grid map filters demo node, filtering this map -->
             <node pkg="grid_map_demos" type="filters_demo" name="grid_map_filter_demo" output="screen">
-                <param name="input_topic" value="/local_elevation_mapping/elevation_map" />
+                <!-- TODO : remove node name "grid_map_filter_demo" in namespace -->
+                <param name="input_topic" value="/local_elevation/local_elevation_mapping/elevation_map" />
                 <param name="output_topic" value="filtered_map" />
-                <rosparam command="load" file="$(find tracked_description)/config/grid_map_config/normal.yaml" />
+                <rosparam command="load" file="$(find tracked_mapping)/config/grid_map_config/local_gridmap_filter.yaml" />
             </node>
-            <!-- Load the general parameters (except for filter chain) for this demo. 加载grid map的其他参数 -->
-            <rosparam command="load" file="$(find tracked_description)/config/grid_map_config/filters_demo.yaml" />
-            <!-- Launch the grid map visualizer. 启动可视化 -->
-            <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
-                <!-- <rosparam command="load" file="$(find tracked_description)/config/grid_map_config/local_slope.yaml" /> -->
-            </node>
+            <!-- Load the general parameters (except for filter chain) for this demo. load other grid map parameters, explicitly use topic name with namespace-->
+            <rosparam command="load" file="$(find tracked_mapping)/config/grid_map_config/local_gridmap_viz.yaml" />
+            <!-- Launch the grid map visualizer enable visualization-->
+            <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen"/>
         </group>
-        <group if="$(arg global_elevation)">
-            <rosparam command="load" file="$(find octo2grid_node)/config/octo2grid_config.yaml" />
+        
+        <!-- similar to local map but use octomap as map source -->
+        <group if="$(arg global_elevation)" ns="global_elevation">
             <node pkg="octo2grid_node" type="octo2grid_node" name="octo2grid_node" output="screen" />
+            <node pkg="grid_map_demos" type="filters_demo" name="grid_map_filter_demo" output="screen">
+                <param name="input_topic" value="/global_elevation/octo2grid_node/grid_map" />
+                <param name="output_topic" value="filtered_map" />
+                <rosparam command="load" file="$(find tracked_mapping)/config/grid_map_config/global_gridmap_filter.yaml" />
+            </node>
+            <rosparam command="load" file="$(find octo2grid_node)/config/octo2grid_config.yaml" />
+            <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen"/>
         </group>
     </group>
 </launch>
