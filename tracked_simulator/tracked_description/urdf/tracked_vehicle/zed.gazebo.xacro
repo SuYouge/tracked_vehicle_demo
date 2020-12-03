@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+The MIT License (MIT)
+
+Copyright (c) 2020 Raffaello Bonghi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Reference: https://www.stereolabs.com/
+       depth_camera:
+        - left
+        - right
+       resolution:
+        - HD2K
+        - HD1080
+        - HD720
+        - VGA
+       -->
+  <xacro:include filename="$(find tracked_description)/urdf/tracked_vehicle/imu.gazebo.xacro" />
+  <xacro:macro name="zed_camera_gazebo" params="camera_name camera_model depth_camera resolution">
+
+    <link name="camera_depth_frame_gazebo" />
+    <joint name="${camera_name}_depth_gazebo_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+      <parent link="${camera_model}_${depth_camera}_camera_frame" />
+      <child link="camera_depth_frame_gazebo" />
+    </joint>
+    
+    <!-- TODO: Fix with proper frame -->
+    <link name="${camera_name}_imu_frame_gazebo" />
+    <joint name="${camera_name}_imu_gazebo_joint" type="fixed">
+      <origin xyz="0.01 0 0.01" rpy="0 0 0" />
+      <parent link="${camera_model}_camera_center" />
+      <child link="${camera_name}_imu_frame_gazebo" />
+    </joint>
+
+    <xacro:property name="depth_rate" value="30" />
+
+    <xacro:if value="${resolution == 'HD2K'}">
+        <xacro:property name="resolution_width" value="4416" />
+        <xacro:property name="resolution_heigth" value="1242" />
+        <xacro:property name="update_rate" value="15" />
+    </xacro:if>
+    <xacro:if value="${resolution == 'HD1080'}">
+        <xacro:property name="resolution_width" value="3840" />
+        <xacro:property name="resolution_heigth" value="1080" />
+        <xacro:property name="update_rate" value="30" />
+    </xacro:if>
+    <xacro:if value="${resolution == 'HD720'}">
+        <xacro:property name="resolution_width" value="752" />
+        <xacro:property name="resolution_heigth" value="480" />
+        <xacro:property name="update_rate" value="30" />
+    </xacro:if>
+    <xacro:if value="${resolution == 'VGA'}">
+        <xacro:property name="resolution_width" value="1344" />
+        <xacro:property name="resolution_heigth" value="376" />
+        <xacro:property name="update_rate" value="100" />
+    </xacro:if>
+
+    <xacro:if value="${camera_model == 'zed'}">
+        <xacro:property name="baseline" value="0.12" />
+        <xacro:property name="fov" value="2.0" />
+        <xacro:property name="clip_near" value="0.3" />
+        <xacro:property name="clip_far" value="25" />
+        <!-- Gazebo color -->
+        <gazebo reference="${camera_model}_camera_center">
+          <material>Gazebo/Grey</material>
+        </gazebo>
+    </xacro:if>
+    <xacro:if value="${camera_model == 'zedm'}">
+        <xacro:property name="baseline" value="0.06" />
+        <xacro:property name="fov" value="2.0" />
+        <xacro:property name="clip_near" value="0.1" />
+        <xacro:property name="clip_far" value="15" />
+        <!-- Add IMU for ZED -->
+        <xacro:imu_gazebo name="${camera_name}" frame="${camera_name}_imu_frame_gazebo" reflink="base_imu_link" />
+        <!-- Gazebo color -->
+        <gazebo reference="${camera_model}_camera_center">
+          <material>Gazebo/DarkGrey</material>
+        </gazebo>
+    </xacro:if>
+    <xacro:if value="${camera_model == 'zed2'}">
+        <xacro:property name="baseline" value="0.12" />
+        <xacro:property name="fov" value="1.8" />
+        <xacro:property name="clip_near" value="0.2" />
+        <xacro:property name="clip_far" value="20" />
+        <!-- Add IMU for ZED -->
+        <!-- <xacro:imu_gazebo name="${camera_name}" frame="${camera_name}_imu_frame_gazebo" reflink="base_imu_link"/> -->
+        <!-- Gazebo color -->
+        <gazebo reference="${camera_model}_camera_center">
+          <material>Gazebo/Black</material>
+        </gazebo>
+    </xacro:if>
+
+    <xacro:imu_gazebo name="zed_imu" frame="${camera_model}_imu_frame_gazebo"/>
+
+    <gazebo reference="${camera_model}_imu_frame_gazebo">
+      <sensor type="multicamera" name="${camera_name}_stereo_camera">
+        <update_rate>${update_rate}</update_rate>
+        <camera name="left">
+          <pose>0 0 0 0 0 0</pose>
+          <horizontal_fov>${fov}</horizontal_fov>
+          <image>
+            <width>${resolution_width}</width>
+            <height>${resolution_heigth}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <camera name="right">
+          <pose>0 ${-baseline} 0 0 0 0</pose>
+          <horizontal_fov>${fov}</horizontal_fov>
+          <image>
+            <width>${resolution_width}</width>
+            <height>${resolution_heigth}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
+          <cameraName>${camera_name}</cameraName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>${update_rate}</updateRate>
+          <imageTopicName>image_rect_color</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>${camera_model}_left_camera_optical_frame</frameName>
+          <!-- <rightFrameName>${camera_model}_right_camera_optical_frame</rightFrameName> -->
+          <!-- <baseline>${baseline}</baseline> -->
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>0.0</distortionT1>
+          <distortionT2>0.0</distortionT2>
+          <hackBaseline>${baseline}</hackBaseline>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${camera_model}_camera_center">
+      <sensor type="depth" name="${camera_name}_depth">
+        <always_on>true</always_on>
+        <update_rate>${depth_rate}</update_rate>
+        <camera>
+          <horizontal_fov>${fov}</horizontal_fov>
+          <image>
+            <format>R8G8B8</format>
+            <width>${resolution_width}</width>
+            <height>${resolution_heigth}</height>
+          </image>
+          <clip>
+            <near>${clip_near}</near>
+            <far>${clip_far}</far>
+          </clip>
+        </camera>
+        <plugin name="${camera_name}_camera_controller" filename="libgazebo_ros_openni_kinect.so">
+          <cameraName>${camera_name}</cameraName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>${depth_rate}</updateRate>
+          <imageTopicName>rgb/image_rect_color</imageTopicName>
+          <depthImageTopicName>depth/depth_registered</depthImageTopicName>
+          <pointCloudTopicName>depth/points</pointCloudTopicName>
+          <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+          <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+          <frameName>camera_depth_frame_gazebo</frameName>
+          <baseline>${baseline}</baseline>
+          <pointCloudCutoff>0.02</pointCloudCutoff>
+          <distortionK1>0</distortionK1>
+          <distortionK2>0</distortionK2>
+          <distortionK3>0</distortionK3>
+          <distortionT1>0</distortionT1>
+          <distortionT2>0</distortionT2>
+          <CxPrime>0</CxPrime>
+          <Cx>0</Cx>
+          <Cy>0</Cy>
+          <focalLength>0</focalLength>
+          <hackBaseline>0</hackBaseline>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

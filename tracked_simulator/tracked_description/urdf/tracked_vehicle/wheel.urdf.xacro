@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="wheel">
+
+	<xacro:macro name="wheel" params="type parent num">
+		<xacro:if value="${type == 'left'}">
+			<xacro:property name="flag" value="1" />
+		</xacro:if>
+		<xacro:if value="${type == 'right'}">
+			<xacro:property name="flag" value="-1" />
+		</xacro:if>
+		<xacro:if value="${num == 1}">
+			<xacro:property name="bias" value="0.25" />
+		</xacro:if>
+		<xacro:if value="${num == 2}">
+			<xacro:property name="bias" value="0.1786" />
+		</xacro:if>
+		<xacro:if value="${num == 3}">
+			<xacro:property name="bias" value="0.1072" />
+		</xacro:if>
+		<xacro:if value="${num == 4}">
+			<xacro:property name="bias" value="-0.25" />
+		</xacro:if>
+		<xacro:if value="${num == 5}">
+			<xacro:property name="bias" value="-0.0358" />
+		</xacro:if>
+		<xacro:if value="${num == 6}">
+			<xacro:property name="bias" value="-0.1072" />
+		</xacro:if>
+		<xacro:if value="${num == 7}">
+			<xacro:property name="bias" value="-0.1786" />
+		</xacro:if>
+		<xacro:if value="${num == 8}">
+			<xacro:property name="bias" value="0.0358" />
+		</xacro:if>
+
+		<link name="${type}_track_wheel${num}">
+			<inertial>
+				<mass value="0.5"/>
+				<origin rpy="1.5708  0  0" xyz="0  0  0"/>
+				<inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+			</inertial>
+
+			<collision name="${type}_track_wheel${num}_collision">
+				<origin rpy="1.5708 0 0" xyz="0 0 0"/>
+				<geometry>
+					<cylinder length="0.09728" radius="0.09047"/>
+				</geometry>
+			</collision>
+
+			<visual name="${type}_track_wheel${num}_visual">
+				<origin rpy="1.5708 0 0" xyz="0 0 0"/>
+				<geometry>
+					<cylinder length="0.09728" radius="0.09047"/>
+				</geometry>
+			</visual>
+		</link>
+
+		<joint name="${type}_track_wheel${num}_j" type="revolute">
+			<parent link="${type}_track"/>
+			<child link="${type}_track_wheel${num}"/>
+			<origin rpy="0  0  0" xyz="${bias} 0 0.01855"/>
+			<axis xyz="0  1  0"/>
+			<limit effort="0.0" lower="-1e+16" upper="1e+16" velocity="0.0"/>
+		</joint>
+
+		<gazebo reference="${type}_track_wheel${num}">
+			<mu1>500.0</mu1>
+			<mu2>300.0</mu2>
+			<fdir1>0 0 0</fdir1>
+			<maxContacts>5</maxContacts>
+			<minDepth>0.05</minDepth>
+			<maxVel>0.001</maxVel>
+			<gravity>true</gravity>
+			<kp>1e6</kp>
+			<!-- <kd>1</kd> -->
+			<collision name="${type}_track_wheel${num}_gazebo_collid">
+				<geometry>
+					<cylinder>
+						<radius>0.09047</radius>
+						<length>0.09728</length>
+					</cylinder>
+				</geometry>
+				<surface>
+					<friction>
+						<torsional>
+							<coefficient>10</coefficient>
+							<use_patch_radius>false</use_patch_radius>
+							<surface_radius>0.09047</surface_radius>
+							<patch_radius>0.05</patch_radius>
+						</torsional>
+					</friction>
+					<contact>
+						<poissons_ratio>0.5</poissons_ratio>
+						<elastic_modulus>1e8</elastic_modulus>
+					</contact>
+				</surface>
+			</collision>
+			<material>Gazebo/Black</material>
+		</gazebo>
+
+	</xacro:macro>
+
+
+</robot>

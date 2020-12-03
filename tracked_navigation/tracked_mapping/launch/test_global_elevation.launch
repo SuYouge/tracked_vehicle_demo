@@ -1,0 +1,4 @@
+<launch>
+    <rosparam command="load" file="$(find octo2grid_node)/config/octo2grid_config.yaml" />
+    <node pkg="octo2grid_node" type="octo2grid_node" name="octo2grid_node" output="screen" />
+</launch>

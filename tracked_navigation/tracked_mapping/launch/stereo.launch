@@ -1,0 +1,132 @@
+<launch>
+    <arg name="mapping_only" default="false"/>
+    <arg name="cost_map" default="false"/>
+    <arg name="local_elevation" default="true"/>
+    <arg name="global_elevation" default="false"/>
+
+    <!-- Choose visualization -->
+    <arg name="rviz" default="true" />
+    <arg name="rtabmapviz" default="false" />
+    <arg name="local_bundle" default="true" />
+    <arg name="stereo_sync" default="false" />
+    <param name="use_sim_time" type="bool" value="true"/>
+
+    <!-- Just to uncompress images for stereo_image_rect -->
+    <!-- <node name="republish_left" type="republish" pkg="image_transport" args="compressed in:=/stereo_camera/left/image_raw_throttle raw out:=/stereo_camera/left/image_raw_throttle_relay" />
+    <node name="republish_right" type="republish" pkg="image_transport" args="compressed in:=/stereo_camera/right/image_raw_throttle raw out:=/stereo_camera/right/image_raw_throttle_relay" /> -->
+
+    <!-- Run the ROS package stereo_image_proc for image rectification -->
+    <group ns="/stereo_camera">
+        <node if="$(arg stereo_sync)" pkg="nodelet" type="nodelet" name="stereo_sync" args="standalone rtabmap_ros/stereo_sync">
+            <remap from="left/image_rect" to="/zed2/left/image_rect_color"/>
+            <remap from="right/image_rect" to="/zed2/right/image_rect_color"/>
+            <remap from="left/camera_info" to="/zed2/left/camera_info"/>
+            <remap from="right/camera_info" to="/zed2/right/camera_info"/>
+        </node>
+    </group>
+
+    <group ns="rtabmap">
+        <!-- Stereo Odometry -->
+        <node pkg="rtabmap_ros" type="stereo_odometry" name="stereo_odometry" output="screen">
+            <remap from="left/image_rect" to="/zed2/left/image_rect_color"/>
+            <remap from="right/image_rect" to="/zed2/right/image_rect_color"/>
+            <remap from="left/camera_info" to="/zed2/left/camera_info"/>
+            <remap from="right/camera_info" to="/zed2/right/camera_info"/>
+            <remap from="rgbd_image" to="/stereo_camera/rgbd_image"/>
+            <remap from="odom" to="/stereo_odometry"/>
+
+            <param name="subscribe_rgbd" type="bool" value="$(arg stereo_sync)"/>
+            <param name="frame_id" type="string" value="base_link"/>
+            <param name="odom_frame_id" type="string" value="odom"/>
+
+            <param name="Odom/Strategy" type="string" value="0"/>
+            <!-- 0=Frame-to-Map, 1=Frame=to=Frame -->
+            <param name="Vis/EstimationType" type="string" value="1"/>
+            <!-- 0=3D->3D 1=3D->2D (PnP) -->
+            <param name="Vis/MaxDepth" type="string" value="0"/>
+            <param name="Odom/GuessMotion" type="string" value="true"/>
+            <param name="Vis/MinInliers" type="string" value="10"/>
+            <param unless="$(arg local_bundle)" name="OdomF2M/BundleAdjustment" type="string" value="0"/>
+            <param name="OdomF2M/MaxSize" type="string" value="1000"/>
+            <param name="GFTT/MinDistance" type="string" value="10"/>
+            <param name="GFTT/QualityLevel" type="string" value="0.00001"/>
+            <param name="GFTT/QualityLevel" type="string" value="0.00001"/>
+            <param name="wait_imu_to_init" value="false"/>
+        </node>
+
+        <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen" args="--delete_db_on_start">
+            <param name="frame_id" type="string" value="base_link"/>
+            <param unless="$(arg stereo_sync)" name="subscribe_stereo" type="bool" value="true"/>
+            <param name="subscribe_depth" type="bool" value="false"/>
+            <param name="subscribe_rgbd" type="bool" value="$(arg stereo_sync)"/>
+            <remap from="left/image_rect" to="/zed2/left/image_rect_color"/>
+            <remap from="right/image_rect" to="/zed2/right/image_rect_color"/>
+            <remap from="left/camera_info" to="/zed2/left/camera_info"/>
+            <remap from="right/camera_info" to="/zed2/right/camera_info"/>
+            <remap from="rgbd_image" to="/stereo_camera/rgbd_image"/>
+            <remap from="odom" to="/stereo_odometry"/>
+            <param name="queue_size" type="int" value="30"/>
+            <param name="map_negative_poses_ignored" type="bool" value="true"/>
+            <param name="Rtabmap/TimeThr" type="string" value="700"/>
+            <param name="Grid/DepthDecimation" type="string" value="4"/>
+            <param name="Grid/FlatObstacleDetected" type="string" value="true"/>
+            <param name="Kp/MaxDepth" type="string" value="0"/>
+            <param name="Kp/DetectorStrategy" type="string" value="6"/>
+            <param name="Vis/EstimationType" type="string" value="1"/>
+            <param name="Vis/MaxDepth" type="string" value="0"/>
+            <param name="RGBD/CreateOccupancyGrid" type="string" value="true"/>
+        </node>
+    </group>
+
+    <!-- Visualisation RVIZ -->
+    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find tracked_description)/rviz/stereo_outdoor.rviz"/>
+    <node name="gt_publiser" pkg="tracked_description" type="gt_publisher_node" args="world ground_truth ground_truth/state ground_truth/trajectory"/>
+    <node pkg="tf" type="static_transform_publisher" name="world_to_map" args="0.0 0.0 0.0 0.0 0.0 0.0 /world /map 100" />
+
+    <group unless="$(arg mapping_only)">
+        <!-- ROS navigation stack move_base -->
+        <group if="$(arg cost_map)">
+            <!-- <remap from="openni_points" to="/rtabmap/cloud_map"/> -->
+            <!-- <remap from="base_scan" to="/base_scan"/> -->
+            <!-- <remap from="map" to="/world"/> -->
+            <!-- <remap from="move_base_simple/goal" to="/planner_goal"/> -->
+            <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+                <rosparam file="$(find tracked_description)/config/navi_config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+                <rosparam file="$(find tracked_description)/config/navi_config/global_costmap_params.yaml" command="load" />
+                <rosparam file="$(find tracked_description)/config/navi_config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+                <rosparam file="$(find tracked_description)/config/navi_config/local_costmap_params.yaml" command="load" />
+                <rosparam file="$(find tracked_description)/config/navi_config/base_local_planner_params.yaml" command="load" />
+            </node>
+        </group>
+        <group if="$(arg local_elevation)">
+            <!-- elevation map 将tf转换为带有方差的pose消息-->
+            <node pkg="elevation_mapping_demos" type="tf_to_pose_publisher.py" name="tf_to_pose" output="screen">
+                <param name="from_frame" type="string" value="/map"/>
+                <param name="to_frame" type="string" value="/odom"/>
+            </node>
+            <!-- 接收上一个节点发出的to_frame_pose并进行heightmap建图 消息发布为/local_elevation_mapping/elevation_map-->
+            <node pkg="elevation_mapping" type="elevation_mapping" name="local_elevation_mapping" output="screen">
+                <remap from="/local_elevation_mapping/odom_pose" to="/odom_pose"/>
+                <rosparam command="load" file="$(find tracked_description)/config/heightmap_config/robot.yaml" />
+                <rosparam command="load" file="$(find tracked_description)/config/heightmap_config/perfect.yaml" />
+                <rosparam command="load" file="$(find tracked_description)/config/heightmap_config/postprocessor_pipeline.yaml" />
+            </node>
+            <!-- Launch the grid map filters demo node. 对地图进行滤波-->
+            <node pkg="grid_map_demos" type="filters_demo" name="grid_map_filter_demo" output="screen">
+                <param name="input_topic" value="/local_elevation_mapping/elevation_map" />
+                <param name="output_topic" value="filtered_map" />
+                <rosparam command="load" file="$(find tracked_description)/config/grid_map_config/normal.yaml" />
+            </node>
+            <!-- Load the general parameters (except for filter chain) for this demo. 加载grid map的其他参数 -->
+            <rosparam command="load" file="$(find tracked_description)/config/grid_map_config/filters_demo.yaml" />
+            <!-- Launch the grid map visualizer. 启动可视化 -->
+            <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
+                <!-- <rosparam command="load" file="$(find tracked_description)/config/grid_map_config/local_slope.yaml" /> -->
+            </node>
+        </group>
+        <group if="$(arg global_elevation)">
+            <rosparam command="load" file="$(find octo2grid_node)/config/octo2grid_config.yaml" />
+            <node pkg="octo2grid_node" type="octo2grid_node" name="octo2grid_node" output="screen" />
+        </group>
+    </group>
+</launch>

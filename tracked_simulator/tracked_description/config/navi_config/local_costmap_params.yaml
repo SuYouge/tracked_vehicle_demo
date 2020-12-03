@@ -1,0 +1,25 @@
+local_costmap:
+    global_frame: odom
+    robot_base_frame: base_link
+    update_frequency: 2.0
+    publish_frequency: 2.0
+    static_map: false
+    rolling_window: true # 保持costmap以机器人为中心
+    width: 4.0
+    height: 4.0
+    resolution: 0.025
+    origin_x: -2.0
+    origin_y: -2.0
+  
+    observation_sources: point_cloud_sensor
+  
+    # assuming receiving a cloud from rtabmap_ros/obstacles_detection node
+    point_cloud_sensor: {
+      sensor_frame: zed2_left_camera_optical_frame, # 传感器坐标系的名字
+      data_type: PointCloud2, # LaserScan或PointCloud
+      topic: /rtabmap/cloud_map, # 传感器话题
+      expected_update_rate: 0.5, 
+      marking: true, # 是否允许标记障碍物
+      # clearing: true, # 是否允许清除障碍物
+      min_obstacle_height: -99999.0,
+      max_obstacle_height: 99999.0}

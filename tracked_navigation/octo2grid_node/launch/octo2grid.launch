@@ -1,0 +1,15 @@
+<launch>
+  <rosparam command="load" file="$(find octo2grid_node)/config/octo2grid_config.yaml" />
+
+  <!-- Load the octomap -->
+  <!-- <node pkg="octomap_server" type="octomap_server_static" name="octomap_server" args="$(find octo2grid_node)/data/freiburg1_360.bt" output="screen"/> -->
+
+  <!-- Launch the octomap conversion node -->
+  <node pkg="octo2grid_node" type="octo2grid_node" name="octo2grid_node" output="screen" />
+
+  <!-- Launch the grid map visualizer -->
+  <!-- <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen" /> -->
+
+  <!-- Launch RViz with the demo configuration -->
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find octo2grid_node)/rviz/octo2grid.rviz" /> -->
+</launch>

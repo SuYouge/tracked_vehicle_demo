@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='ASCII'?>
+<sdf version="1.4">
+  <model name="AutoGen Terrain">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <heightmap>
+            <uri>model://autogen_terrain/materials/textures/heightmap.png</uri>
+            <size>129 129 12</size>
+            <pos>0 0 0</pos>
+          </heightmap>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <heightmap>
+            <texture>
+              <diffuse>model://autogen_terrain/materials/textures/water.jpg</diffuse>
+              <normal>file://media/materials/textures/flat_normal.png</normal>
+              <size>5</size>
+            </texture>
+            <texture>
+              <diffuse>model://autogen_terrain/materials/textures/sand.jpg</diffuse>
+              <normal>file://media/materials/textures/flat_normal.png</normal>
+              <size>5</size>
+            </texture>
+            <texture>
+              <diffuse>model://autogen_terrain/materials/textures/grass.jpg</diffuse>
+              <normal>file://media/materials/textures/flat_normal.png</normal>
+              <size>5</size>
+            </texture>
+            <texture>
+              <diffuse>file://media/materials/textures/dirt_diffusespecular.png</diffuse>
+              <normal>file://media/materials/textures/flat_normal.png</normal>
+              <size>5</size>
+            </texture>
+            <blend>
+              <min_height>0</min_height>
+              <fade_dist>0.8</fade_dist>
+            </blend>
+            <blend>
+              <min_height>0.1</min_height>
+              <fade_dist>1.5</fade_dist>
+            </blend>
+            <blend>
+              <min_height>3</min_height>
+              <fade_dist>6</fade_dist>
+            </blend>
+            <uri>model://autogen_terrain/materials/textures/heightmap.png</uri>
+            <size>129 129 12</size>
+            <pos>0 0 0</pos>
+          </heightmap>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,129 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="wheel_tracked">
+  <xacro:include filename="$(find tracked_description)/urdf/tracked_vehicle/track.urdf.xacro" />
+  <xacro:include filename="$(find tracked_description)/urdf/tracked_vehicle/wheel.urdf.xacro" />
+  <xacro:include filename="$(find tracked_description)/urdf/tracked_vehicle/zed.urdf.xacro" />
+  <xacro:include filename="$(find tracked_description)/urdf/tracked_vehicle/zed.gazebo.xacro" />
+  <!-- <xacro:include filename="$(find tracked_description)/urdf/tracked_vehicle/tracked_vehicle.gazebo.xacro" /> -->
+  <xacro:property name="M_PI" value="3.14159"/>
+
+  <xacro:arg name="depth_camera"  default="left"/>
+  <xacro:arg name="resolution"    default="HD720"/>
+  <xacro:property name="zed_meshes" value="$(find tracked_description)/urdf/tracked_vehicle/zed"/>
+
+  <!-- <link name="dummy">
+  </link>
+
+  <joint name="dummy_joint" type="fixed">
+      <parent link="dummy"/>
+      <child link="base_link"/>
+  </joint> -->
+
+  <link name="base_link">
+    <inertial>
+      <mass value="13.14"/>
+      <origin rpy="0 0 0" xyz="0 0 0.218"/>
+      <inertia ixx="0.10019" ixy="0" ixz="0" iyy="0.302044" iyz="0" izz="0.345043"/>
+    </inertial>
+
+    <collision name="base_link_collision">
+      <origin rpy="0 0 0" xyz="0 0 0.218"/>
+      <geometry>
+        <box size="0.50017 0.24093 0.139"/>
+      </geometry>
+    </collision>
+
+    <visual name="base_link_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.218"/>
+      <geometry>
+        <box size="0.50017 0.24093 0.139"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <xacro:track type="left" parent="base_link"/>
+  <xacro:track type="right" parent="base_link"/>
+  
+  <xacro:wheel type="left" parent="left_track" num="1" />
+  <xacro:wheel type="left" parent="left_track" num="2" />
+  <xacro:wheel type="left" parent="left_track" num="3" />
+  <xacro:wheel type="left" parent="left_track" num="4" />
+  <xacro:wheel type="left" parent="left_track" num="5" />
+  <xacro:wheel type="left" parent="left_track" num="6" />
+  <xacro:wheel type="left" parent="left_track" num="7" />
+  <xacro:wheel type="left" parent="left_track" num="8" />
+
+  <xacro:wheel type="right" parent="right_track" num="1" />
+  <xacro:wheel type="right" parent="right_track" num="2" />
+  <xacro:wheel type="right" parent="right_track" num="3" />
+  <xacro:wheel type="right" parent="right_track" num="4" />
+  <xacro:wheel type="right" parent="right_track" num="5" />
+  <xacro:wheel type="right" parent="right_track" num="6" />
+  <xacro:wheel type="right" parent="right_track" num="7" />
+  <xacro:wheel type="right" parent="right_track" num="8" />
+
+  <xacro:zed parent="base_link" camera_name="zed2" camera_model="zed2">
+    <origin xyz="0.23 0.0 0.45" rpy="0 0 0" />
+  </xacro:zed>
+  
+  <xacro:zed_camera_gazebo camera_name="zed2" camera_model="zed2"
+    depth_camera="$(arg depth_camera)" resolution="$(arg resolution)" />
+  <gazebo>
+  
+    <plugin name="wheel_tracked_vehicle_controller" filename="libWheelTrackedVehiclePlugin_tr.so">
+        <left_joint>left_track_wheel1_j</left_joint>
+        <right_joint>right_track_wheel1_j</right_joint>
+        <left_joint>left_track_wheel2_j</left_joint>
+        <right_joint>right_track_wheel2_j</right_joint>
+        <left_joint>left_track_wheel3_j</left_joint>
+        <right_joint>right_track_wheel3_j</right_joint>
+        <left_joint>left_track_wheel4_j</left_joint>
+        <right_joint>right_track_wheel4_j</right_joint>
+        <left_joint>left_track_wheel5_j</left_joint>
+        <right_joint>right_track_wheel5_j</right_joint>
+        <left_joint>left_track_wheel6_j</left_joint>
+        <right_joint>right_track_wheel6_j</right_joint>
+        <left_joint>left_track_wheel7_j</left_joint>
+        <right_joint>right_track_wheel7_j</right_joint>
+        <left_joint>left_track_wheel8_j</left_joint>
+        <right_joint>right_track_wheel8_j</right_joint>
+        <!-- It'd be nicer to have a higher value here, but there's bug
+            https://github.com/osrf/gazebo/issues/2068
+            TODO The bug was already fixed but it is still broken. -->
+        <track_mu>2.0</track_mu>
+        <track_mu2>1.5</track_mu2>
+    </plugin>
+    
+    <plugin filename="libKeysToCmdVelPlugin.so" name="keyboard_control">
+        <cmd_vel_topic>~/tracked_vehicle/cmd_vel</cmd_vel_topic>
+        <!-- <cmd_vel_topic>~/tracked_vehicle/joint_cmd</cmd_vel_topic> -->
+        <key_controls>
+            <!-- WSAD controls + space/Enter for stop -->
+            <stop>13</stop>
+            <stop>32</stop>
+            <accelerate>119</accelerate>
+            <decelerate>115</decelerate>
+            <left>97</left>
+            <right>100</right>
+        </key_controls>
+    </plugin>
+    
+    <plugin name="tracked_drive" filename="libgazebo_ros_tracked_drive_tr.so">
+      <commandTopic>cmd_vel</commandTopic>
+      <pubTopic>/cmd_vel_twist</pubTopic>
+      <legacyMode>1</legacyMode>
+    </plugin>
+
+    <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d_tr.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>50.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <topicName>ground_truth/state</topicName>
+      <gaussianNoise>0.01</gaussianNoise>
+      <frameName>world</frameName>
+      <xyzOffset>0 0 0</xyzOffset>
+      <rpyOffset>0 0 0</rpyOffset>
+    </plugin>
+
+  </gazebo>
+</robot>

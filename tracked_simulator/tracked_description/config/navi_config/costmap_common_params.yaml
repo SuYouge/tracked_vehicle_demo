@@ -1,0 +1,25 @@
+obstacle_range: 2.5 # 有效的障碍物的更新范围
+raytrace_range: 3.0 # 清除3.0以外的障碍物
+footprint: [[ 0.3,  0.3], [-0.3,  0.3], [-0.3, -0.3], [ 0.3, -0.3]] # 机器人的几何参数
+footprint_padding: 0.03 # 机器人膨胀
+#robot_radius: ir_of_robot
+inflation_radius: 0.55 # 障碍物膨胀
+transform_tolerance: 1 # tf转换的延迟
+
+# 在进行space clearing操作钱没有接收到控制信息的最长忍耐时间
+controller_patience: 2.0
+
+# 全局规划器类型
+NavfnROS:
+    allow_unknown: true # 是否允许navfn在未知空间创建规划
+
+# 机器人被卡住后如何恢复
+recovery_behaviors: [
+    {name: conservative_clear, type: clear_costmap_recovery/ClearCostmapRecovery},
+    {name: aggressive_clear, type: clear_costmap_recovery/ClearCostmapRecovery}
+]
+
+conservative_clear: 
+    reset_distance: 3.00
+aggressive_clear:
+    reset_distance: 1.84

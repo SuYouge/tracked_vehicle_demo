@@ -1,0 +1,37 @@
+// rosdep install --from-paths src --ignore-src --rosdistro=melodic --os=ubuntu:bionic -y -r
+{
+    "name": "gazebo_ros_docker",
+    "dockerFile": "Dockerfile",
+    "extensions": [
+		// "ms-iot.vscode-ros",
+		// "ms-vscode.cpptools",
+		// "mhutchie.git-graph"
+    ],
+    "runArgs": [
+		"--runtime=nvidia",
+		"-it",
+		"--rm",
+		"--privileged",
+		"-e ROS_HOSTNAME=localhost",
+		"-e ROS_MASTER_URI=http://localhost:11311",
+		"--name=ros_container",
+		// "--gpus",
+		// "--network=host",
+	    ],
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+	// "postCreateCommand": "bash /catkin_ws/src/panda_simulation/scripts/docker-setup.sh",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/catkin_ws,type=bind,consistency=delegated",
+	"workspaceFolder": "/catkin_ws",
+	"mounts": [
+		"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+		"source=/etc/localtime,target=/etc/localtime,type=bind",
+		// "source=/usr/lib/x86_64-linux-gnu/nvidia,target=/usr/lib/x86_64-linux-gnu/nvidia,type=bind",
+		// "source=/usr/lib/nvidia,target=/usr/lib/nvidia,type=bind"
+	],
+	"containerEnv": {
+		"DISPLAY": "${localEnv:DISPLAY}",
+	},
+	"containerUser": "docker_ros"
+}

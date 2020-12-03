@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="world" default="empty.world"/>
+
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <arg name="x_pos" default="-48.121"/>
+  <arg name="y_pos" default="-11.356453"/>
+  <arg name="z_pos" default="4.26"/>
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!-- <arg name="world_name" value="$(find tracked_description)/worlds/$(arg world)"/> -->
+    <arg name="world_name" value="$(find tracked_description)/worlds/mountain.world"/>
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <arg name="model" default="$(find xacro)/xacro --inorder '$(find tracked_description)/urdf/tracked_vehicle/tracked_vehicle.urdf.xacro'" />
+
+  <param name="robot_description" command="$(arg model)" />
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model tracked_vehicle -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos)  -param robot_description"/>
+
+  <!-- ground truth publisher -->
+  <node name="gt_publiser" pkg="tracked_description" type="gt_publisher_node" args="world ground_truth ground_truth/state ground_truth/trajectory"/>
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tracked_description)/rviz/ground_truth.rviz" required="true" /> -->
+</launch>

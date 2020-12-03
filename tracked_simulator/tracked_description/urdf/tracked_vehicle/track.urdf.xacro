@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="track">
+
+	<xacro:property name="track_x" value="0.009728" />
+	<xacro:property name="track_y" value="0.018094" />
+	<xacro:property name="track_z" value="0.05" />
+
+	<xacro:macro name="track" params="type parent">
+		<xacro:if value="${type == 'left'}">
+			<xacro:property name="flag" value="1" />
+		</xacro:if>
+		<xacro:if value="${type == 'right'}">
+			<xacro:property name="flag" value="-1" />
+		</xacro:if>
+
+		<joint name="${type}_track_j" type="revolute">
+			<parent link="${parent}"/>
+			<child link="${type}_track"/>
+			<origin rpy="0 0 0" xyz="0 ${flag * 0.1985}  0.1"/>
+			<axis xyz="0 1 0"/>
+			<limit effort="0.0" lower="0.0" upper="0.0" velocity="4.0"/>
+		</joint>
+
+		<link name="${type}_track">
+			<inertial>
+			<mass value="2.06"/>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<inertia ixx="0.002731" ixy="0" ixz="0" iyy="0.032554" iyz="0" izz="0.031391"/>
+			</inertial>
+			<collision name="${type}_track_collision">
+				<origin rpy="0 0 0" xyz="0 0 0.01855"/>
+				<geometry>
+					<box size="${track_x} ${track_y} ${track_z}"/>
+				</geometry>
+			</collision>
+		</link>		
+
+	</xacro:macro>
+</robot>

@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+    <world name="default">
+        <!--
+            A demo world for tracked vehicles.
+
+            Drive the vehicle by keyboard using arrows, or by publishing the
+            desired velocity to ~/<vehicle name>/cmd_vel
+            (x and yaw command the motion).
+        -->
+        <gui>
+            <plugin name="keyboard" filename="libKeyboardGUIPlugin.so"/>
+        </gui>
+
+        <include>
+            <uri>model://sun</uri>
+        </include>
+
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+
+    </world>
+</sdf>

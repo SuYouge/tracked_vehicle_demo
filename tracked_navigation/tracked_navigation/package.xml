@@ -1,0 +1,21 @@
+<package>
+  <name>tracked_navigation</name>
+  <version>1.0.0</version>
+  <description>
+  Mapping metapackage for tracked_vehicle
+  </description>
+  <author>Youge Su</author>
+  <maintainer email="yougesu@163.com">Youge Su</maintainer>
+  <license>BSD</license>
+  <url></url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>elevation_mapping</run_depend>
+  <run_depend>kindr_ros</run_depend>
+  <run_depend>kindr_msgs</run_depend>
+  <run_depend>kindr_rviz_plugins</run_depend>
+  <run_depend>multi_dof_joint_trajectory_rviz_plugins</run_depend>
+  <run_depend>octomap_rviz_plugins</run_depend>
+  <export>
+    <metapackage/>
+  </export>
+</package>

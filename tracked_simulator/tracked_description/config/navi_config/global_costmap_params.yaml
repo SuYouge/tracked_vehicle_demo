@@ -1,0 +1,19 @@
+global_costmap:
+    global_frame: map # costmap的坐标
+    robot_base_frame: base_link
+    # rolling_window: false
+    update_frequency: 2.0
+    publish_frequency: 2.0
+    transform_tolerance: 0.5
+    footprint_padding: 0.05
+    track_unknown_space: true
+    publish_frequency: 0.5
+    plugins:
+        - {name: static_layer, type: "costmap_2d::StaticLayer"}
+        - {name: obstacles_layer, type: "costmap_2d::VoxelLayer"}
+        - {name: inflater_layer, type: "costmap_2d::InflationLayer"}
+    static_layer:
+        map_topic: /rtabmap/grid_map
+        subscribe_to_updates: true
+        static_map: false
+        track_unknown_space: true

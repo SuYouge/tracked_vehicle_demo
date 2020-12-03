@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="model" default="$(find xacro)/xacro --inorder '$(find tracked_description)/urdf/tracked_vehicle/tracked_vehicle.urdf.xacro'" />
+  
+    <param name="robot_description" command="$(arg model)" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+      <param name="use_gui" value="false"/>
+    </node>
+    <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find tracked_description)/rviz/display.rviz" output="screen" required="true"/>
+</launch>

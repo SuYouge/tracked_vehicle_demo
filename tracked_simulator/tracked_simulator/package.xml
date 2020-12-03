@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>tracked_simulator</name>
+  <version>1.0.0</version>
+  <description>The tracked_simulator package</description>
+
+  <maintainer email="yougesu@163.com">YougeSu</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>tracked_description</run_depend>
+  <run_depend>teleop_twist_keyboard</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <metapackage/>
+  </export>
+</package>

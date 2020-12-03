@@ -1,0 +1,12 @@
+[submodule "tracked_navigation/elevation_mapping"]
+	path = tracked_navigation/elevation_mapping
+	url = https://github.com/ANYbotics/elevation_mapping.git
+[submodule "tracked_navigation/kindr_ros"]
+	path = tracked_navigation/kindr_ros
+	url = https://github.com/ANYbotics/kindr_ros.git
+[submodule "tracked_navigation/octomap_rviz_plugins"]
+	path = tracked_navigation/octomap_rviz_plugins
+	url = https://github.com/OctoMap/octomap_rviz_plugins.git
+[submodule "tracked_simulator/teleop_twist_keyboard"]
+	path = tracked_simulator/teleop_twist_keyboard
+	url = https://github.com/ros-teleop/teleop_twist_keyboard.git
